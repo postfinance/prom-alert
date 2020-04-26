@@ -8,3 +8,5 @@
 ```
 prom-alert -labels team=linux,severity=warning
 ```
+
+You can hit `ctrl+c` to stop the alert firing.
