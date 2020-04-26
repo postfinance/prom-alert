@@ -42,6 +42,10 @@ func (l labels) String() string {
 }
 
 func (l labels) Set(s string) error {
+	if s == "" {
+		return nil
+	}
+
 	fields := strings.Split(s, ",")
 
 	for _, field := range fields {
@@ -81,7 +85,7 @@ func main() {
 		},
 	}
 
-	if err := c.Post(a); err != nil {
+	if err := c.post(a); err != nil {
 		log.Fatal(err)
 	}
 
@@ -93,7 +97,7 @@ func main() {
 
 	fmt.Printf("alert '%s' is %s\n", a.Annotations.Summary, a.Status)
 
-	if err := c.Post(a); err != nil {
+	if err := c.post(a); err != nil {
 		log.Fatal(err)
 	}
 }

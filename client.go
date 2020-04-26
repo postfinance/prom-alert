@@ -13,7 +13,7 @@ type client struct {
 	*http.Client
 }
 
-func (c client) Post(a ...alert) error {
+func (c client) post(a ...alert) error {
 	d, err := json.Marshal(a)
 	if err != nil {
 		return err

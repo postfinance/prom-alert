@@ -1,6 +1,5 @@
 ---
 run:
-  tests: false
   skip-dirs:
     - .github
     - build
