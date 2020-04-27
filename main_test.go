@@ -31,7 +31,7 @@ func TestPost(t *testing.T) {
 	}
 
 	expectedAlert := alert{
-		Status: statusFiring,
+		State: stateFiring,
 		Labels: labels{
 			"team": "linux",
 		},

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"flag"
 	"fmt"
 	"log"
@@ -13,15 +14,20 @@ import (
 	"time"
 )
 
+var (
+	version = "0.0.0" // goreleaser sets this value
+)
+
 const (
-	statusFiring   = "firing"
-	statusResolved = "resolved"
-	timeout        = 10 * time.Second
-	dfltURL        = "http://localhost:9090/api/v1/alerts"
+	stateFiring     = "firing"
+	stateResolved   = "resolved"
+	timeout         = 10 * time.Second
+	dfltURL         = "http://localhost:9090/api/v1/alerts"
+	alertNamePrefix = "testalert"
 )
 
 type alert struct {
-	Status      string `json:"status"`
+	State       string `json:"state"`
 	Labels      labels
 	Annotations annotations `json:"annotations"`
 }
@@ -63,12 +69,26 @@ func (l labels) Set(s string) error {
 func main() {
 	ctx := contextWithSignal(context.Background(), nil, syscall.SIGINT, syscall.SIGTERM)
 
-	l := labels{}
-	summary := flag.String("summary", "Latency is high", "The summary for the alert.")
+	l := labels{
+		"alertname": name(),
+		"instance":  name() + ".example.net",
+	}
+	user := os.Getenv("USER")
+	summary := flag.String("summary", "This is a test alert", "The summary for the alert.")
 	url := flag.String("url", dfltURL, "The prometheus URL.")
-
-	flag.Var(&l, "labels", "The labels to use for the alert (for example: service=my-service,team=my-team).")
+	v := flag.Bool("version", false, "Show version information.")
 	flag.Parse()
+
+	if *v {
+		fmt.Println("version:", version)
+		return
+	}
+
+	if user != "" {
+		l["user"] = user
+	}
+
+	flag.Var(&l, "labels", "The labels to use for the alert.")
 
 	c := client{
 		url: *url,
@@ -78,7 +98,7 @@ func main() {
 	}
 
 	a := alert{
-		Status: statusFiring,
+		State:  stateFiring,
 		Labels: l,
 		Annotations: annotations{
 			Summary: *summary,
@@ -89,13 +109,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("alert '%s' is %s\n", a.Annotations.Summary, a.Status)
+	fmt.Printf("alert '%s' is %s\n", a.Annotations.Summary, a.State)
 	fmt.Println("ctrl+c to resolve alert")
 	<-ctx.Done()
 
-	a.Status = statusResolved
+	a.State = stateResolved
 
-	fmt.Printf("alert '%s' is %s\n", a.Annotations.Summary, a.Status)
+	fmt.Printf("alert '%s' is %s\n", a.Annotations.Summary, a.State)
 
 	if err := c.post(a); err != nil {
 		log.Fatal(err)
@@ -123,4 +143,12 @@ func contextWithSignal(ctx context.Context, f func(s os.Signal), s ...os.Signal)
 	}()
 
 	return ctx
+}
+
+func name() string {
+	h := sha256.New()
+	h.Write([]byte(time.Now().String()))
+	sha := fmt.Sprintf("%x", h.Sum(nil))
+
+	return alertNamePrefix + "-" + sha[:8]
 }
