@@ -9,6 +9,18 @@ This tool lets you create prometheus test alerts.
 ## Usage
 
 ```
+Usage of ./prom-alert:
+  -labels value
+        The labels to use for the alert. (default alertname=testalert-c6be61f6,instance=testalert-7341f7b5.example.net,user=zbindenren)
+  -summary string
+        The summary for the alert. (default "This is a test alert")
+  -url string
+        The prometheus URL. (default "http://localhost:9090/api/v1/alerts")
+```
+
+Example:
+
+```
 prom-alert -labels team=linux,severity=warning
 ```
 
